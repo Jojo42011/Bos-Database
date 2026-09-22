@@ -39,6 +39,7 @@ import {
   LockKeyhole,
 } from 'lucide-react';
 import './styles.css';
+import BrowserPanel from './BrowserPanel.jsx';
 
 const money = (c, compact = false) =>
   new Intl.NumberFormat('en-US', {
@@ -256,6 +257,7 @@ function App() {
             [Users, 'Audience'],
             [CalendarDays, 'Events'],
             [Database, 'Data sources'],
+            [Globe2, 'Browser worker'],
           ].map(([Icon, label]) => (
             <button
               key={label}
@@ -344,6 +346,14 @@ function App() {
           {page === 'Events' && <Events version={version} open={setModal} write={write} />}
           {page === 'Data sources' && (
             <Sources version={version} open={setModal} write={write} workspace={workspace} />
+          )}
+          {page === 'Browser worker' && (
+            <BrowserPanel
+              key={workspace}
+              api={api}
+              workspace={workspace}
+              onConnect={() => setModal({ type: 'auth' })}
+            />
           )}
         </main>
         <footer>
@@ -1152,6 +1162,15 @@ function Auth({ onClose, onSuccess }) {
           <p className="form-note">
             <LockKeyhole size={13} /> At least 12 characters. Your real workspace starts empty.
           </p>
+          {data?.setupRequired && data?.setupTokenRequired && (
+            <Field
+              label="Workspace setup token"
+              name="setup_token"
+              type="password"
+              autoComplete="off"
+              required
+            />
+          )}
           <Button className="primary full" disabled={busy}>
             {busy ? 'Please wait…' : data?.setupRequired ? 'Create workspace' : 'Sign in'}
             <ArrowRight size={15} />

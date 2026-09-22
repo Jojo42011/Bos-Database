@@ -1,0 +1,324 @@
+.browser-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border: 1px solid #30445a;
+  border-radius: 7px;
+  background: linear-gradient(110deg, #1b3046, #152232);
+  margin-bottom: 23px;
+}
+.browser-engine {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #a7c5dc;
+}
+.browser-engine strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+.browser-engine span {
+  display: block;
+  color: #819eb8;
+  font-size: 10px;
+  margin-top: 6px;
+}
+.browser-onboarding {
+  text-align: center;
+  padding: 65px 25px;
+}
+.browser-onboarding > svg {
+  color: #a3bfd8;
+  margin-bottom: 20px;
+}
+.browser-onboarding h2 {
+  font-size: 23px;
+  font-weight: 450;
+}
+.browser-onboarding p {
+  max-width: 480px;
+  margin: 15px auto 25px;
+  color: #879eb7;
+  font-size: 12px;
+}
+.browser-connect {
+  padding: 25px;
+}
+.browser-connect h2 {
+  font-size: 18px;
+}
+.browser-connect > div > p {
+  font-size: 11px;
+  color: #8fa7be;
+  margin-top: 10px;
+  max-width: 690px;
+}
+.browser-url {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 23px;
+}
+.browser-url .field {
+  flex: 1;
+  margin: 0;
+}
+.browser-url .button {
+  height: 40px;
+}
+.remote-browser {
+  margin-top: 23px;
+  border: 1px solid #344e66;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #101b2a;
+}
+.remote-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #344e66;
+}
+.remote-toolbar code {
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8fa9c0;
+  flex: 1;
+}
+.remote-viewport {
+  background: #09111b;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+}
+.remote-viewport img {
+  width: 100%;
+  display: block;
+  cursor: crosshair;
+}
+.remote-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 13px;
+}
+.remote-input > input {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid #405a72;
+  background: #0e1928;
+  border-radius: 4px;
+  color: #d0e2f2;
+  padding: 10px;
+  font-size: 11px;
+}
+.remote-browser > .form-note {
+  padding: 0 15px;
+}
+.credential-panel {
+  border-top: 1px solid #34485e;
+  margin-top: 22px;
+  padding-top: 22px;
+}
+.credential-panel > p {
+  color: #859fb8;
+  font-size: 11px;
+  margin: 10px 0 18px;
+}
+.credential-panel > .button {
+  margin-top: 15px;
+}
+.sync-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.sync-card {
+  padding: 22px;
+}
+.sync-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sync-card > p {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+  color: #7d97b1;
+  margin: 13px 0;
+}
+.sync-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  font-size: 10px;
+  color: #a1b9cf;
+  margin: 18px 0;
+}
+.sync-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sync-card > small {
+  display: block;
+  color: #7f9ab4;
+  font-size: 9px;
+  line-height: 1.9;
+}
+.sync-card-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 20px;
+}
+.empty-action {
+  margin-top: 22px;
+}
+.browser-runs {
+  margin-top: 26px;
+}
+.run-list {
+  padding: 8px 23px 15px;
+}
+.run-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #2b3f54;
+  padding: 18px 0;
+}
+.run-row:last-child {
+  border: 0;
+}
+.run-row > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.run-row strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.run-row small {
+  display: block;
+  font-size: 9px;
+  color: #7e9ab5;
+  margin-top: 6px;
+}
+.run-row p {
+  font-size: 10px;
+  color: #a0b7cc;
+  margin-top: 9px;
+  overflow-wrap: anywhere;
+}
+.run-row .run-error {
+  color: #d1a6a6;
+}
+.run-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.browser-success {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #2d4a3d33;
+  border: 1px solid #41634e;
+  color: #b1d0bb;
+  padding: 12px 15px;
+  border-radius: 5px;
+  font-size: 11px;
+  margin: 15px 0;
+}
+.field textarea {
+  width: 100%;
+  background: #0e1a29;
+  border: 1px solid #344b63;
+  border-radius: 5px;
+  color: #c0d3e5;
+  padding: 13px;
+  font: 11px/1.8 monospace;
+  resize: vertical;
+}
+.field-help {
+  font-size: 10px;
+  color: #7995b0;
+  line-height: 1.7;
+  margin: -9px 0 19px;
+}
+.schedule-options {
+  padding: 17px;
+  background: #172d4033;
+  border: 1px solid #304b62;
+  border-radius: 6px;
+}
+.schedule-options > label:not(.field) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  margin-bottom: 15px;
+  color: #b7cadd;
+}
+.schedule-options input[type='checkbox'] {
+  accent-color: #b4cfe5;
+}
+.schedule-options .field {
+  max-width: 230px;
+}
+.schedule-options > small {
+  display: block;
+  font-size: 9px;
+  color: #809db8;
+  line-height: 1.7;
+}
+@media (max-width: 760px) {
+  .browser-url {
+    flex-wrap: wrap;
+  }
+  .browser-url > .field {
+    flex-basis: 100%;
+  }
+  .browser-connect {
+    padding: 18px;
+  }
+  .sync-grid {
+    grid-template-columns: 1fr;
+  }
+  .remote-toolbar {
+    gap: 8px;
+    padding: 10px;
+  }
+  .remote-toolbar .live-indicator {
+    font-size: 8px;
+  }
+  .remote-toolbar .text-button {
+    font-size: 8px;
+  }
+  .run-row {
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+  .run-buttons {
+    width: 100%;
+  }
+  .browser-engine span {
+    font-size: 8px;
+  }
+  .browser-engine strong {
+    font-size: 11px;
+  }
+  .remote-input .button {
+    font-size: 9px;
+    padding: 8px;
+  }
+  .browser-intro {
+    padding: 15px;
+  }
+}

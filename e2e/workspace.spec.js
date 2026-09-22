@@ -58,15 +58,13 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
   await expect(page.getByRole('heading', { name: 'E2E Velvet Night' })).toBeVisible();
   await page.getByRole('button', { name: 'Import audience', exact: true }).click();
   await page.getByLabel('Which event').selectOption({ label: 'E2E Velvet Night · Austin' });
-  await page
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'qa-orders.csv',
-      mimeType: 'text/csv',
-      buffer: Buffer.from(
-        'order_id,name,email,quantity,subtotal,refund,purchased_at,city\nqa-001,Test Guest,test@example.com,2,60.00,0.00,2026-09-18T20:00:00-05:00,Austin\n',
-      ),
-    });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'qa-orders.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      'order_id,name,email,quantity,subtotal,refund,purchased_at,city\nqa-001,Test Guest,test@example.com,2,60.00,0.00,2026-09-18T20:00:00-05:00,Austin\n',
+    ),
+  });
   await page.getByRole('button', { name: 'Preview import' }).click();
   await expect(page.getByRole('heading', { name: 'Review your import.' })).toBeVisible();
   await page.getByRole('button', { name: 'Import 1 orders' }).click();
@@ -88,5 +86,23 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
   await expect(page.getByText('Live workspace', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Audience', exact: true }).click();
   await expect(page.getByText('test@example.com', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Browser worker', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Let the night flow.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add event sync' }).first().click();
+  await page.getByLabel('Crowd Control event').selectOption({ label: 'E2E Velvet Night · Austin' });
+  await page.getByLabel('POSH organizer report page URL').fill('https://example.com/report');
+  await page.getByRole('button', { name: 'Save event sync' }).click();
+  await expect(page.getByRole('dialog').locator('.error')).toBeVisible();
+  await page.getByLabel('POSH organizer report page URL').fill('https://posh.vip/event/test');
+  await page.getByRole('button', { name: 'Save event sync' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('Event sync saved.')).toBeVisible();
+  await page.screenshot({ path: 'test-results/browser-worker-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
+  await expect(page.locator('.sidebar')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -238, 0)');
+  await page.screenshot({ path: 'test-results/browser-worker-mobile.png', fullPage: true, animations: 'disabled' });
   expect(errors).toEqual([]);
 });

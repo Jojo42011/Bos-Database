@@ -34,6 +34,8 @@ Copy `.env.example` to `.env` for configuration. Never commit `.env`, database f
 
 ## Import an event report
 
+For browser-driven downloads, persistent login, and scheduled imports, see [Embedded browser worker](docs/browser-worker.md). The worker is part of this app and uses open-source Playwright; live POSH selectors and export compatibility still require verification with your account.
+
 1. Create an event in your live workspace.
 2. Choose **Import CSV** and download the sample template.
 3. Transform the POSH export into one row per order. Exclude transfers. The importer is not a claim of full compatibility with every POSH export layout.
@@ -67,11 +69,11 @@ The inbox acknowledges only after persisting the raw payload. Identical JSON ser
 
 ## Deployment and data handling
 
-This is a single-owner, single-server foundation. SQLite persists in `DATA_DIR` (default `./data`); use a persistent disk, not ephemeral serverless storage. Real data is in `crowd-control.sqlite`; the isolated synthetic demo is regenerated in memory on startup. WAL mode and transactional imports are enabled. Schema version 1 is initialized on startup; future schema changes need explicit migrations.
+This is a single-owner, single-server foundation. SQLite persists in `DATA_DIR` (default `./data`); use a persistent disk, not ephemeral serverless storage. Real data is in `crowd-control.sqlite`; the isolated synthetic demo is regenerated in memory on startup. WAL mode and transactional imports are enabled. The embedded browser adds version 2 source/job tables; future schema changes need explicit migrations. The [Fly deployment guide](docs/fly-deployment.md) uses one machine and one persistent volume for the complete app.
 
 Before hosting with real PII:
 
-- Provision the owner privately. Use HTTPS and set `PUBLIC_ORIGIN` to the exact public origin and `COOKIE_SECURE=true`.
+- Use HTTPS and set `PUBLIC_ORIGIN` to the exact public origin and `COOKIE_SECURE=true`. In production, initial owner creation requires a random `SETUP_TOKEN` of at least 32 characters, entered in the setup form.
 - Keep reverse-proxy and host configuration controlled. `HOST` defaults to `127.0.0.1`; use `0.0.0.0` only behind the intended access boundary. Do not enable broad proxy trust.
 - Encrypt the server disk and backups, restrict filesystem access, and test restoration. Use SQLite's online backup API or stop the service for a consistent backup; copying just the main file while WAL is active is insufficient.
 - Define source-payload retention, deletion/export workflows, backup expiry and consent evidence review. Those operational workflows are not automated here.
@@ -87,6 +89,10 @@ src/                 React UI and responsive styling
 server/app.mjs       Auth, validation, API, import and webhook workflows
 server/db.mjs        Schema, queries, demo fixtures and transactions
 server/index.mjs     Single-origin dev/production server
+server/imports.mjs   Shared CSV staging and transactional import service
+server/browser/      Embedded Playwright worker, network policy, vault, and API
+src/BrowserPanel.jsx Owner browser controls, sync recipes and import review
+docs/                Browser setup and single-machine Fly deployment
 tests/               API behavior and security checks
 ```
 

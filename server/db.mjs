@@ -23,7 +23,8 @@ export function openDb(file) {
     CREATE INDEX IF NOT EXISTS idx_orders_event ON orders(event_id);
     CREATE INDEX IF NOT EXISTS idx_interactions_person ON interactions(person_id,occurred_at);
     CREATE INDEX IF NOT EXISTS idx_consent_person ON consent(person_id,channel,created_at);
-    PRAGMA user_version=1;`);
+    `);
+  if (db.prepare('PRAGMA user_version').get().user_version < 1) db.exec('PRAGMA user_version=1');
   return db;
 }
 export function transaction(db, fn) {
