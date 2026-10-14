@@ -64,7 +64,7 @@ export class BrowserWorker {
     db.exec(`CREATE TABLE IF NOT EXISTS browser_sources(id TEXT PRIMARY KEY,event_id TEXT NOT NULL REFERENCES events(id),config_json TEXT NOT NULL,verified_hash TEXT,next_run_at TEXT,last_run_at TEXT,created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS browser_jobs(id TEXT PRIMARY KEY,source_id TEXT NOT NULL REFERENCES browser_sources(id),status TEXT NOT NULL,trigger TEXT NOT NULL,created_at TEXT NOT NULL,started_at TEXT,finished_at TEXT,batch_id TEXT REFERENCES import_batches(id),digest TEXT,summary_json TEXT,error TEXT,config_hash TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS idx_browser_jobs_status ON browser_jobs(status,created_at);
-      PRAGMA user_version=2;`);
+`);
     db.prepare(
       "UPDATE browser_jobs SET status='interrupted',error='Server restarted during this run. Retry the sync.',finished_at=? WHERE status='running'",
     ).run(now());
@@ -252,7 +252,6 @@ export class BrowserWorker {
   }
   async frame() {
     if (!this.page || this.mode === 'closed') return { image: null };
-    this.lastTouch = Date.now();
     const image = await this.page.screenshot({ type: 'jpeg', quality: 70, timeout: 5000 });
     return {
       image: `data:image/jpeg;base64,${image.toString('base64')}`,

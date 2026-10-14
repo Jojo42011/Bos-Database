@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import BrowserPanel from './BrowserPanel.jsx';
+import CollectorPanel from './CollectorPanel.jsx';
+import CampaignPanel from './CampaignPanel.jsx';
 
 const money = (c, compact = false) =>
   new Intl.NumberFormat('en-US', {
@@ -258,6 +260,8 @@ function App() {
             [CalendarDays, 'Events'],
             [Database, 'Data sources'],
             [Globe2, 'Browser worker'],
+            [Database, 'POSH collector'],
+            [Mail, 'Campaign drafts'],
           ].map(([Icon, label]) => (
             <button
               key={label}
@@ -346,6 +350,17 @@ function App() {
           {page === 'Events' && <Events version={version} open={setModal} write={write} />}
           {page === 'Data sources' && (
             <Sources version={version} open={setModal} write={write} workspace={workspace} />
+          )}
+          {page === 'POSH collector' && (
+            <CollectorPanel
+              key={workspace}
+              api={api}
+              workspace={workspace}
+              onConnect={() => setModal({ type: 'auth' })}
+            />
+          )}
+          {page === 'Campaign drafts' && (
+            <CampaignPanel key={workspace} api={api} workspace={workspace} />
           )}
           {page === 'Browser worker' && (
             <BrowserPanel
@@ -1509,6 +1524,12 @@ function Recommendation({ id, onClose }) {
                       <div>
                         <strong>{p.name}</strong>
                         <small>{p.reasons.join(' · ') || 'No matching signals yet'}</small>
+                        <small>
+                          {p.confidence} confidence · {p.evidence_events} past paid events
+                          {p.typical_lead_days !== null
+                            ? ` · Usually buys ${p.typical_lead_days} days before`
+                            : ''}
+                        </small>
                       </div>
                       <span className="score">
                         {p.score}

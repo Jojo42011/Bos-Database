@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.mjs';
 import { openDb, seedDemo } from './db.mjs';
+import { Collector } from './collector/service.mjs';
 import { BrowserWorker } from './browser/worker.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.resolve(process.env.DATA_DIR || path.join(root, 'data'));
@@ -30,7 +31,9 @@ const worker = new BrowserWorker({
     .map((s) => s.trim())
     .filter(Boolean),
 });
+const collector = new Collector({ db: live, worker });
 const app = createApp({
+  collector,
   live,
   demo,
   webhookToken: process.env.POSH_WEBHOOK_TOKEN,
@@ -54,6 +57,7 @@ const server = app.listen(port, host, () =>
 );
 for (const signal of ['SIGTERM', 'SIGINT'])
   process.on(signal, async () => {
+    await collector.shutdown();
     await worker.shutdown();
     server.close(() => {
       live.close();

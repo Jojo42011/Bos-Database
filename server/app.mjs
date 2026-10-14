@@ -3,6 +3,9 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 import { stageImport, commitImport } from './imports.mjs';
+import { rankAudience } from './recommendations.mjs';
+import { mountCollectorRoutes } from './collector/service.mjs';
+import { mountCampaignRoutes } from './campaigns.mjs';
 import { mountBrowserRoutes } from './browser/routes.mjs';
 import { z } from 'zod';
 import { id, now, transaction, audit, people, events } from './db.mjs';
@@ -60,6 +63,7 @@ export function createApp({
   publicOrigin = '',
   secureCookie = false,
   browserWorker = null,
+  collector = null,
   setupToken = '',
 }) {
   const app = express();
@@ -212,7 +216,9 @@ export function createApp({
     const db = req.db,
       audience = people(db),
       ev = events(db),
-      orders = db.prepare('SELECT * FROM orders').all();
+      orders = db
+        .prepare("SELECT * FROM orders WHERE status IN ('paid','refunded','cancelled','rsvp')")
+        .all();
     const city = z.string().max(100).optional().parse(req.query.city),
       filtered = city ? audience.filter((p) => p.city === city) : audience;
     const ids = new Set(filtered.map((p) => p.id)),
@@ -363,54 +369,7 @@ export function createApp({
     res.status(201).json({ id: eid });
   });
   app.get('/api/events/:id/audience', (req, res) => {
-    const db = req.db,
-      event = events(db).find((e) => e.id === req.params.id);
-    if (!event) fail(404, 'Event not found.');
-    const existing = new Set(
-      db
-        .prepare("SELECT person_id FROM orders WHERE event_id=? AND status IN ('paid','rsvp')")
-        .all(event.id)
-        .map((r) => r.person_id),
-    );
-    const history = db
-      .prepare(
-        "SELECT o.person_id,o.event_id,e.genre,e.concept FROM orders o JOIN events e ON e.id=o.event_id WHERE o.status='paid'",
-      )
-      .all();
-    const ranked = people(db)
-      .filter((p) => !existing.has(p.id))
-      .map((p) => {
-        let score = 0;
-        const reasons = [];
-        const past = history.filter((o) => o.person_id === p.id);
-        if (p.city === event.city) {
-          score += 35;
-          reasons.push('Home city matches');
-        }
-        if (past.some((o) => o.concept === event.concept)) {
-          score += 35;
-          reasons.push('Bought this event concept');
-        }
-        if (past.some((o) => o.genre === event.genre)) {
-          score += 20;
-          reasons.push(`Previous ${event.genre} buyer`);
-        }
-        if (p.events_count > 1) {
-          score += 10;
-          reasons.push('Repeat customer');
-        }
-        return { ...p, score, reasons, tier: score >= 70 ? 'A' : score >= 35 ? 'B' : 'C' };
-      })
-      .sort((a, b) => b.score - a.score);
-    res.json({
-      event,
-      suppressed: existing.size,
-      people: ranked,
-      email: ranked.filter((p) => p.score >= 35 && p.email_status === 'opted_in').length,
-      sms: ranked.filter((p) => p.score >= 70 && p.sms_status === 'opted_in').length,
-      version: 'rules-v1',
-      note: 'Relevance scores, not purchase probabilities. No messages are sent.',
-    });
+    res.json(rankAudience(req.db, req.params.id));
   });
   app.get('/api/sources', (req, res) =>
     res.json({
@@ -434,6 +393,8 @@ export function createApp({
     }),
   );
   mountBrowserRoutes(app, browserWorker);
+  mountCollectorRoutes(app, collector);
+  mountCampaignRoutes(app);
   app.post('/api/imports/preview', (req, res) => {
     const input = z
       .object({

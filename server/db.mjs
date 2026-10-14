@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { migrateCollector } from './collector/store.mjs';
 
 export const id = () => randomUUID();
 export const now = () => new Date().toISOString();
@@ -25,6 +26,7 @@ export function openDb(file) {
     CREATE INDEX IF NOT EXISTS idx_consent_person ON consent(person_id,channel,created_at);
     `);
   if (db.prepare('PRAGMA user_version').get().user_version < 1) db.exec('PRAGMA user_version=1');
+  migrateCollector(db);
   return db;
 }
 export function transaction(db, fn) {
@@ -44,9 +46,9 @@ export function audit(db, action, detail) {
 export function people(db) {
   return db
     .prepare(
-      `SELECT p.*,COALESCE((SELECT SUM(subtotal_cents-refund_cents) FROM orders WHERE person_id=p.id),0) AS revenue_cents,
-    (SELECT COUNT(DISTINCT event_id) FROM orders WHERE person_id=p.id AND status='paid') AS events_count,
-    (SELECT MAX(purchased_at) FROM orders WHERE person_id=p.id) AS last_purchase,
+      `SELECT p.*,COALESCE((SELECT SUM(subtotal_cents-refund_cents) FROM orders WHERE person_id=p.id AND status IN ('paid','refunded','cancelled')),0) AS revenue_cents,
+    (SELECT COUNT(DISTINCT event_id) FROM orders WHERE person_id=p.id AND status='paid' AND subtotal_cents>refund_cents) AS events_count,
+    (SELECT MAX(purchased_at) FROM orders WHERE person_id=p.id AND status='paid' AND subtotal_cents>refund_cents) AS last_purchase,
     COALESCE((SELECT status FROM consent WHERE person_id=p.id AND channel='email' ORDER BY created_at DESC,rowid DESC LIMIT 1),'unknown') AS email_status,
     COALESCE((SELECT status FROM consent WHERE person_id=p.id AND channel='sms' ORDER BY created_at DESC,rowid DESC LIMIT 1),'unknown') AS sms_status
     FROM people p ORDER BY revenue_cents DESC,p.name`,
@@ -57,7 +59,7 @@ export function events(db) {
   return db
     .prepare(
       `SELECT e.*,COALESCE(SUM(CASE WHEN o.status IN ('paid','rsvp') THEN o.quantity ELSE 0 END),0) AS tickets,
-    COALESCE(SUM(o.subtotal_cents-o.refund_cents),0) AS revenue_cents,COUNT(DISTINCT o.person_id) AS buyers,
+    COALESCE(SUM(CASE WHEN o.status IN ('paid','refunded','cancelled') THEN o.subtotal_cents-o.refund_cents ELSE 0 END),0) AS revenue_cents,COUNT(DISTINCT CASE WHEN o.status IN ('paid','rsvp') THEN o.person_id END) AS buyers,
     SUM(o.scanned_count) AS scans FROM events e LEFT JOIN orders o ON o.event_id=e.id GROUP BY e.id ORDER BY e.starts_at DESC`,
     )
     .all();

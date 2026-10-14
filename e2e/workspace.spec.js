@@ -103,6 +103,31 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
   await expect(page.locator('.sidebar')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -238, 0)');
-  await page.screenshot({ path: 'test-results/browser-worker-mobile.png', fullPage: true, animations: 'disabled' });
+  await page.screenshot({
+    path: 'test-results/browser-worker-mobile.png',
+    fullPage: true,
+    animations: 'disabled',
+  });
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.getByRole('button', { name: 'POSH collector', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'POSH collector' })).toBeVisible();
+  await expect(page.getByText('No collections yet.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Collect now' })).toBeDisabled();
+  await page.screenshot({ path: 'test-results/collector-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'Campaign drafts', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Event', exact: true })
+    .selectOption({ label: 'E2E Velvet Night' });
+  await page.getByLabel('Message', { exact: true }).fill('Join us for our next event.');
+  await page.getByRole('button', { name: 'Create draft', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Audience review' })).toBeVisible();
+  await expect(page.getByText('0 eligible · 0 held out for measurement')).toBeVisible();
+  await page.screenshot({ path: 'test-results/campaign-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
+  await expect(page.locator('.sidebar')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -238, 0)');
+  await page.screenshot({ path: 'test-results/campaign-mobile.png', fullPage: true, animations: 'disabled' });
   expect(errors).toEqual([]);
 });

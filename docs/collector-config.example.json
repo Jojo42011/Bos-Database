@@ -1,0 +1,58 @@
+{
+  "organization": "REPLACE_WITH_ACCOUNT_ID",
+  "events": [
+    {
+      "url": "https://posh.vip/REPLACE_WITH_ORGANIZER_EVENTS",
+      "response_url": "https://posh.vip/REPLACE_WITH_OBSERVED_EVENTS_RESPONSE",
+      "ready_selector": "#REPLACE_WITH_READY_SELECTOR",
+      "login_selector": "#REPLACE_WITH_LOGIN_SELECTOR",
+      "items_path": "data.events",
+      "total_path": "data.total",
+      "next_selector": "button[aria-label=\"Next page\"]",
+      "max_pages": 100,
+      "fields": {
+        "external_id": "external_id",
+        "name": "name",
+        "starts_at": "starts_at",
+        "timezone": "timezone",
+        "city": "city",
+        "venue": "venue",
+        "concept": "concept",
+        "genre": "genre",
+        "capacity": "capacity",
+        "price_cents": "price_cents",
+        "status": "status",
+        "updated_at": "updated_at"
+      },
+      "status_map": {}
+    }
+  ],
+  "orders": {
+    "url": "https://posh.vip/REPLACE_WITH_EVENT_PATH/{event_id}/orders",
+    "response_url": "https://posh.vip/REPLACE_WITH_ORDER_RESPONSE/{event_id}",
+    "ready_selector": "#REPLACE_WITH_READY_SELECTOR",
+    "login_selector": "#REPLACE_WITH_LOGIN_SELECTOR",
+    "items_path": "data.orders",
+    "total_path": "data.total",
+    "next_selector": "button[aria-label=\"Next page\"]",
+    "max_pages": 100,
+    "fields": {
+      "external_id": "external_id",
+      "name": "name",
+      "email": "email",
+      "quantity": "quantity",
+      "subtotal_cents": "subtotal_cents",
+      "refund_cents": "refund_cents",
+      "currency": "currency",
+      "purchased_at": "purchased_at",
+      "status": "status",
+      "scanned_count": "scanned_count",
+      "updated_at": "updated_at"
+    },
+    "status_map": {}
+  },
+  "event_links": {},
+  "enabled": false,
+  "auto_import": false,
+  "interval_minutes": 1440
+}

@@ -26,11 +26,15 @@ Copy `.env.example` to `.env` for configuration. Never commit `.env`, database f
 - Overview with database-derived customer counts, net sales, repeat buyer rate, channel distribution, and upcoming events.
 - Searchable audience with repeat-buyer, email-eligible, SMS-eligible, and nonbuyer filters.
 - Customer profiles with purchase history, timelines, and append-only consent evidence.
-- Event creation and explainable audience ranking (rules-v1), suppressing existing paid buyers and free RSVPs.
+- Event creation and explainable audience ranking (affinity-v2), with recency, distinct-event confidence, purchase timing, and suppression of paid/RSVP/pending registrations.
 - CSV preview and transactional import, stable order IDs, refund updates, identity-conflict rejection, and replay-safe commit.
 - POSH webhook inbox with shared-secret authentication and duplicate-payload protection. Deliveries remain `awaiting_mapping`; no unverified payload creates orders.
 - Owner login with scrypt password hashes, hashed server sessions, HttpOnly/SameSite cookies, origin validation, login rate limiting, and audit entries.
 - Read-only synthetic demo in a separate in-memory database. Real imports never enter the demo.
+
+## Daily collector and outreach drafts
+
+The [collector architecture and setup guide](docs/collector.md) covers browser-based event discovery, complete order backfills, daily scheduling, reviewed first import, source reconciliation and campaign drafts. Live POSH mappings require account validation. Email/SMS sending is not connected yet.
 
 ## Import an event report
 
@@ -59,7 +63,7 @@ CSV phone numbers do not imply permission. Record consent evidence separately. S
 - Repeat rate: people with paid orders at more than one distinct event / people with any paid event, across all stored history. Free RSVPs are not paid buyers.
 - Market filtering on overview scopes profiles by recorded home city. Upcoming cards separately filter event city.
 - Attribution: the recorded order channel, not causal attribution or Meta-reported ROAS.
-- Ranking: city +35, prior concept +35, prior genre +20, repeat customer +10. Tier A >=70; B >=35; C otherwise. Scores are not probabilities. No timing model or outbound campaign automation is enabled.
+- Ranking: content affinity up to 40, series up to 25, location up to 20, recency/repeat history up to 15, with 180-day decay. Tier A >=65; B >=30; C otherwise. Scores are not probabilities. See the collector guide for confidence, timing evidence and exclusions.
 
 ## POSH webhook integration boundary
 
@@ -69,7 +73,7 @@ The inbox acknowledges only after persisting the raw payload. Identical JSON ser
 
 ## Deployment and data handling
 
-This is a single-owner, single-server foundation. SQLite persists in `DATA_DIR` (default `./data`); use a persistent disk, not ephemeral serverless storage. Real data is in `crowd-control.sqlite`; the isolated synthetic demo is regenerated in memory on startup. WAL mode and transactional imports are enabled. The embedded browser adds version 2 source/job tables; future schema changes need explicit migrations. The [Fly deployment guide](docs/fly-deployment.md) uses one machine and one persistent volume for the complete app.
+This is a single-owner, single-server foundation. SQLite persists in `DATA_DIR` (default `./data`); use a persistent disk, not ephemeral serverless storage. Real data is in `crowd-control.sqlite`; the isolated synthetic demo is regenerated in memory on startup. WAL mode and transactional imports are enabled. The embedded browser adds version 2 source/job tables; the collector adds version 3 provenance, event metadata and campaign tables; future schema changes need explicit migrations. The [Fly deployment guide](docs/fly-deployment.md) uses one machine and one persistent volume for the complete app.
 
 Before hosting with real PII:
 
@@ -77,7 +81,7 @@ Before hosting with real PII:
 - Keep reverse-proxy and host configuration controlled. `HOST` defaults to `127.0.0.1`; use `0.0.0.0` only behind the intended access boundary. Do not enable broad proxy trust.
 - Encrypt the server disk and backups, restrict filesystem access, and test restoration. Use SQLite's online backup API or stop the service for a consistent backup; copying just the main file while WAL is active is insufficient.
 - Define source-payload retention, deletion/export workflows, backup expiry and consent evidence review. Those operational workflows are not automated here.
-- Set up monitoring and off-device backups. Password reset, MFA, multiple staff roles, production email/SMS integrations, reconciliation jobs and PostgreSQL migration remain follow-up work.
+- Set up monitoring and off-device backups. Password reset, MFA, multiple staff roles, production email/SMS integrations, ticket-level transfer reconciliation and PostgreSQL migration remain follow-up work.
 - Fonts currently load from Google Fonts with local sans-serif fallbacks; self-host the fonts when preparing a locked-down production deployment.
 
 Use PostgreSQL and an explicit migration framework before multi-instance hosting. The current database adapter is isolated in `server/db.mjs`, but its SQLite SQL and synchronous driver require a deliberate migration—not just a connection-string swap.
