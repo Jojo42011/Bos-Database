@@ -8,7 +8,7 @@ beforeEach(() => {
   live = openDb(':memory:');
   demo = openDb(':memory:');
   seedDemo(demo);
-  app = createApp({ live, demo, webhookToken: 'test-webhook-secret' });
+  app = createApp({ requireAuth: true, live, demo, webhookToken: 'test-webhook-secret' });
   agent = request.agent(app);
 });
 afterEach(() => {
@@ -188,4 +188,31 @@ test('webhook inbox requires a secret, deduplicates deliveries and never mutates
       .expect(202);
   assert.equal(live.prepare('SELECT COUNT(*) n FROM webhook_inbox').get().n, 1);
   assert.equal(live.prepare('SELECT COUNT(*) n FROM orders').get().n, 0);
+});
+
+test('default app opens live database without owner setup and keeps request verification', async () => {
+  const open = request(createApp({ live, demo }));
+  await open.get('/api/events').expect(200, []);
+  // A legacy client header cannot switch the open application to synthetic data.
+  await open.get('/api/events').set('X-Workspace', 'demo').expect(200, []);
+  await open.get('/api/auth/status').expect(404);
+  await open.post('/api/events').send({}).expect(403);
+  const created = await open
+    .post('/api/events')
+    .set('X-Crowd-Control', '1')
+    .send({
+      name: 'Open event',
+      concept: 'Series',
+      city: 'Austin',
+      venue: 'Room',
+      starts_at: '2099-01-01T20:00:00Z',
+      timezone: 'America/Chicago',
+      capacity: 100,
+      price_cents: 3000,
+      genre: 'House',
+    })
+    .expect(201);
+  assert.ok(created.body.id);
+  assert.equal(live.prepare('SELECT COUNT(*) n FROM users').get().n, 0);
+  assert.equal((await open.get('/api/events').expect(200)).body.length, 1);
 });

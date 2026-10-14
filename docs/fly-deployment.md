@@ -2,7 +2,9 @@
 
 The included Dockerfile packages the web app, API, database adapter, and open-source Chromium worker together. `fly.toml` mounts a persistent volume at `/data` and disables automatic stopping. The scheduler runs on the server, independent of the owner's computer.
 
-This configuration has not been deployed or container-tested from this Windows environment. Verify the image and a real export on Fly before enabling scheduled imports. Chromium runs as the non-root `node` user with its sandbox enabled; check browser startup on the target host rather than disabling the sandbox to hide launch failures.
+Deployed on 2026-10-14 at https://crowd-control-bos.fly.dev in the `jahan-patel` organization, `dfw` region. One 2 GB shared-CPU machine uses a 3 GB encrypted volume with scheduled snapshots. HTTPS, the health check, application API/UI, and sandboxed Chromium navigation to POSH were verified. The database and browser profile reside under `/data`. A real signed-in POSH collection still needs validation. The app intentionally has no login gate.
+
+The vault encryption key is stored as a Fly secret. The deployment token was supplied only through a temporary process environment, never added to this repository or container. The Docker runtime invokes the Playwright CLI by its package path so production-only installs do not depend on the development test package’s executable link.
 
 ## First deployment
 
@@ -10,9 +12,9 @@ From the repository, with Fly CLI installed and authenticated:
 
 1. Run `fly launch --no-deploy`. Keep the provided Dockerfile, single app, region, and volume configuration. Use your chosen unique app name; no managed database is needed for this SQLite setup.
 2. Create the volume if launch did not create it: `fly volumes create crowd_control_data --region dfw --size 3`.
-3. Set Fly secrets `PUBLIC_ORIGIN=https://YOUR-APP.fly.dev`, `SETUP_TOKEN` (random, at least 32 characters), and optionally `BROWSER_VAULT_KEY` (64 random hexadecimal characters). Generate independent values locally with `npm run browser:key`. Use Fly's secrets interface or `fly secrets set`; never commit values or paste them into a tracked file. Set the exact origin of your custom domain instead if applicable.
+3. Set Fly secrets `PUBLIC_ORIGIN=https://YOUR-APP.fly.dev`, and optionally `BROWSER_VAULT_KEY` (64 random hexadecimal characters). Generate independent values locally with `npm run browser:key`. Use Fly's secrets interface or `fly secrets set`; never commit values or paste them into a tracked file. Set the exact origin of your custom domain instead if applicable.
 4. Run `fly deploy --ha=false` and ensure `fly scale count 1`. Keep exactly one machine: this implementation shares a local SQLite database and one browser profile. Multiple machines would have independent databases and duplicate schedules.
-5. Check `fly status`, `fly logs`, and the public `/healthz` endpoint. Open the HTTPS app, create your owner account using the setup token, then follow the [browser setup guide](browser-worker.md). Production refuses to start with an unprotected initial owner setup or insecure cookie/origin settings.
+5. Check `fly status`, `fly logs`, and the public `/healthz` endpoint. The app opens without login; anyone with network access can read/change data and operate its POSH browser. Configure the intended network access boundary, then follow the [browser setup guide](browser-worker.md).
 6. Confirm a reviewed real POSH import, then enable automatic importing and scheduling. Close the interactive browser, verify a scheduled run finishes, restart the machine, and confirm the database and login state persist.
 
 The starting machine size is 2 GB RAM with one shared CPU. Monitor memory during real exports and increase if needed. One always-running machine and a volume incur Fly charges; the browser software itself is free.

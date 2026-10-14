@@ -128,9 +128,9 @@ export default function BrowserPanel({ api, workspace, onConnect }) {
     <>
       <div className="page-title">
         <div>
-          <span className="eyebrow">YOUR ALWAYS-READY OPERATOR</span>
-          <h1>Let the night flow.</h1>
-          <p>A browser, a saved session, and a clear path from POSH to your audience.</p>
+          <span className="eyebrow">BROWSER</span>
+          <h1>Browser worker</h1>
+          <p>POSH login session and scheduled event imports.</p>
         </div>
         <div className="title-actions">
           <Button onClick={() => (workspace === 'demo' ? onConnect() : setEditor({ ...defaults }))}>
@@ -151,7 +151,7 @@ export default function BrowserPanel({ api, workspace, onConnect }) {
       {workspace === 'demo' ? (
         <section className="panel browser-onboarding">
           <Globe2 size={32} />
-          <h2>Your browser works here.</h2>
+          <h2>Browser session</h2>
           <p>
             Connect your private workspace to log into POSH, save its session, and schedule event
             report imports. No separate app or browser subscription.
@@ -176,7 +176,7 @@ export default function BrowserPanel({ api, workspace, onConnect }) {
           <section className="panel browser-connect">
             <div>
               <span className="eyebrow">01 · CONNECT</span>
-              <h2>Your private POSH session</h2>
+              <h2>POSH session</h2>
               <p>
                 Open the browser below to sign in and complete verification. Close it when finished;
                 the login profile stays on this server.
@@ -300,8 +300,7 @@ export default function BrowserPanel({ api, workspace, onConnect }) {
                 </div>
                 <p className="form-note">
                   Click the page to focus a control, then type or press a key here. The browser view
-                  is private to the signed-in workspace owner. Close the browser to release it for
-                  scheduled jobs.
+                  uses the saved POSH session. Close the browser to release it for scheduled jobs.
                 </p>
               </div>
             )}

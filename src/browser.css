@@ -322,3 +322,41 @@
     padding: 15px;
   }
 }
+.collector-page {
+  display: grid;
+  gap: 20px;
+}
+.collector-page .panel {
+  padding: 24px;
+}
+.collector-page p {
+  color: var(--muted, #647078);
+  line-height: 1.6;
+}
+.collector-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 24px 0;
+}
+.collector-run {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e8e9ec;
+}
+.collector-run > div {
+  flex: 1;
+}
+.collector-page details {
+  margin-top: 24px;
+}
+.collector-page summary {
+  cursor: pointer;
+}
+.campaign-form {
+  display: grid;
+  gap: 16px;
+  max-width: 680px;
+}

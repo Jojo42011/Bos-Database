@@ -67,7 +67,7 @@ before(async () => {
   });
   origin = `http://127.0.0.1:${fixture.address().port}`;
   worker = makeWorker();
-  agent = request.agent(createApp({ live: db, demo, browserWorker: worker }));
+  agent = request.agent(createApp({ requireAuth: true, live: db, demo, browserWorker: worker }));
   await agent
     .post('/api/auth/setup')
     .set('X-Crowd-Control', '1')
@@ -108,7 +108,7 @@ after(async () => {
   demo.close();
 });
 test('browser endpoints require owner authentication and reject demo access', async () => {
-  const app = createApp({ live: db, demo, browserWorker: worker });
+  const app = createApp({ requireAuth: true, live: db, demo, browserWorker: worker });
   await request(app).get('/api/browser').expect(401);
   await agent.get('/api/browser').set('X-Workspace', 'demo').expect(403);
   await agent
@@ -121,7 +121,12 @@ test('browser endpoints require owner authentication and reject demo access', as
 test('a hosted workspace cannot be claimed without its setup token', async () => {
   const fresh = openDb(':memory:');
   try {
-    const app = createApp({ live: fresh, demo, setupToken: 'deployment-test-token' });
+    const app = createApp({
+      requireAuth: true,
+      live: fresh,
+      demo,
+      setupToken: 'deployment-test-token',
+    });
     const body = { email: 'owner@example.com', password: 'a-long-owner-password' };
     await request(app).post('/api/auth/setup').set('X-Crowd-Control', '1').send(body).expect(403);
     await request(app)

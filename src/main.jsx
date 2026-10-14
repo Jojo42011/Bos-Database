@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import BrowserPanel from './BrowserPanel.jsx';
+import CollectorPanel from './CollectorPanel.jsx';
+import CampaignPanel from './CampaignPanel.jsx';
 
 const money = (c, compact = false) =>
   new Intl.NumberFormat('en-US', {
@@ -56,7 +58,7 @@ const initials = (n) =>
     .map((s) => s[0])
     .slice(0, 2)
     .join('');
-let currentWorkspace = 'demo';
+let currentWorkspace = 'live';
 async function api(url, options = {}) {
   const res = await fetch(`/api${url}`, {
     ...options,
@@ -104,7 +106,7 @@ function Empty({ title = 'Nothing here yet', children, icon: Icon = Database }) 
 function Loading() {
   return (
     <div className="loading">
-      <LoaderCircle className="spin" size={22} /> Loading your workspace
+      <LoaderCircle className="spin" size={22} /> Loading
     </div>
   );
 }
@@ -189,7 +191,7 @@ function Modal({ title, subtitle, onClose, children, wide = false }) {
 }
 function App() {
   const [page, setPage] = useState('Overview'),
-    [workspace, setWorkspace] = useState('demo'),
+    [workspace] = useState('live'),
     [version, setVersion] = useState(0),
     [modal, setModal] = useState(null),
     [toast, setToast] = useState(''),
@@ -205,24 +207,8 @@ function App() {
     setPage(p);
     setMobile(false);
   };
-  const write = (type) => (workspace === 'demo' ? setModal({ type: 'auth' }) : setModal({ type }));
+  const write = (type) => setModal({ type });
   const close = useCallback(() => setModal(null), []);
-  const switchWorkspace = async () => {
-    if (workspace === 'live') {
-      setWorkspace('demo');
-      setVersion((v) => v + 1);
-      return;
-    }
-    try {
-      const status = await api('/auth/status');
-      if (status.user) {
-        setWorkspace('live');
-        refresh();
-      } else setModal({ type: 'auth' });
-    } catch (e) {
-      notify(e.message);
-    }
-  };
   return (
     <div className="app">
       {mobile && <div className="sidebar-shade" onClick={() => setMobile(false)} />}
@@ -242,15 +228,7 @@ function App() {
             CROWD<span className="brand-second">CONTROL</span>
           </span>
         </a>
-        <button className="workspace-switch" onClick={switchWorkspace}>
-          <span className="workspace-monogram">CC</span>
-          <span>
-            <strong>Crowd Control</strong>
-            <small>{workspace === 'demo' ? 'Demo workspace' : 'Your workspace'}</small>
-          </span>
-          <ChevronDown size={14} />
-        </button>
-        <span className="nav-label">WORKSPACE</span>
+        <span className="nav-label">DATABASE</span>
         <nav>
           {[
             [LayoutDashboard, 'Overview'],
@@ -258,6 +236,8 @@ function App() {
             [CalendarDays, 'Events'],
             [Database, 'Data sources'],
             [Globe2, 'Browser worker'],
+            [Database, 'POSH collector'],
+            [Mail, 'Campaign drafts'],
           ].map(([Icon, label]) => (
             <button
               key={label}
@@ -270,31 +250,6 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="private-label">
-            <ShieldCheck size={14} /> Your audience. Your asset.
-          </div>
-          <button className="profile" onClick={switchWorkspace}>
-            <Avatar name="Crowd Control" />
-            <span>
-              <strong>Crowd Control</strong>
-              <small>{workspace === 'demo' ? 'Explore the platform' : 'Workspace owner'}</small>
-            </span>
-            <Settings2 size={16} />
-          </button>
-          {workspace === 'live' && (
-            <button
-              className="logout"
-              onClick={async () => {
-                await api('/auth/logout', { method: 'POST' });
-                setWorkspace('demo');
-                refresh();
-              }}
-            >
-              <LogOut size={13} /> Sign out
-            </button>
-          )}
-        </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
@@ -306,31 +261,20 @@ function App() {
             >
               <Menu size={20} />
             </button>
-            <span>Workspace</span>
+            <span>Crowd Control</span>
             <ChevronRight size={13} />
             <strong>{page}</strong>
           </div>
           <div className="top-actions">
             <span className="live-indicator">
               <i />
-              {workspace === 'demo' ? 'Demo data' : 'Live workspace'}
+              Database
             </span>
             <span className="top-divider" />
             <Avatar name="Crowd Control" size="small" />
           </div>
         </header>
         <main>
-          {workspace === 'demo' && (
-            <div className="demo-strip">
-              <span>
-                <Sparkles size={13} /> A preview of what your audience can become. All data here is
-                illustrative.
-              </span>
-              <button onClick={() => setModal({ type: 'auth' })}>
-                Set up your workspace <ArrowRight size={13} />
-              </button>
-            </div>
-          )}
           {page === 'Overview' && (
             <Overview version={version} navigate={navigate} open={setModal} write={write} />
           )}
@@ -347,38 +291,22 @@ function App() {
           {page === 'Data sources' && (
             <Sources version={version} open={setModal} write={write} workspace={workspace} />
           )}
+          {page === 'POSH collector' && (
+            <CollectorPanel key={workspace} api={api} workspace={workspace} />
+          )}
+          {page === 'Campaign drafts' && (
+            <CampaignPanel key={workspace} api={api} workspace={workspace} />
+          )}
           {page === 'Browser worker' && (
-            <BrowserPanel
-              key={workspace}
-              api={api}
-              workspace={workspace}
-              onConnect={() => setModal({ type: 'auth' })}
-            />
+            <BrowserPanel key={workspace} api={api} workspace={workspace} />
           )}
         </main>
-        <footer>
-          <span>
-            CROWD CONTROL <span className="footer-dot">•</span> AUDIENCE INTELLIGENCE
-          </span>
-          <span>Built for the next night.</span>
-        </footer>
       </div>
       {toast && (
         <div className="toast" role="status">
           <CheckCircle2 size={17} />
           {toast}
         </div>
-      )}
-      {modal?.type === 'auth' && (
-        <Auth
-          onClose={close}
-          onSuccess={() => {
-            setWorkspace('live');
-            refresh();
-            close();
-            notify('Your workspace is ready.');
-          }}
-        />
       )}
       {modal?.type === 'event' && (
         <EventForm
@@ -410,7 +338,7 @@ function App() {
           onSuccess={() => {
             refresh();
             close();
-            notify('Import complete. Your audience has been updated.');
+            notify('Import complete.');
           }}
         />
       )}
@@ -439,9 +367,9 @@ function Overview({ version, navigate, open, write }) {
   return (
     <>
       <PageTitle
-        eyebrow="THE BIG PICTURE"
-        title="Your crowd, understood."
-        description="Every connection. Every night. A stronger community."
+        eyebrow="OVERVIEW"
+        title="Overview"
+        description="Audience, ticket sales, and upcoming events."
       >
         <Button icon={Upload} onClick={() => write('import')}>
           Import audience
@@ -514,7 +442,7 @@ function Overview({ version, navigate, open, write }) {
               <section className="panel revenue-panel">
                 <div className="panel-heading">
                   <div>
-                    <h2>Good nights. Lasting connections.</h2>
+                    <h2>Ticket sales</h2>
                     <p>Net ticket sales across your audience</p>
                   </div>
                   <span className="chart-legend">
@@ -536,7 +464,7 @@ function Overview({ version, navigate, open, write }) {
               <section className="panel channels-panel">
                 <div className="panel-heading">
                   <div>
-                    <h2>How they found you</h2>
+                    <h2>Sales by source</h2>
                     <p>Attributed net sales · last 90 days</p>
                   </div>
                   <Link2 size={17} />
@@ -549,8 +477,8 @@ function Overview({ version, navigate, open, write }) {
             </div>
             <div className="section-heading">
               <div>
-                <span className="eyebrow">WHAT'S NEXT</span>
-                <h2>On the horizon</h2>
+                <span className="eyebrow">UPCOMING</span>
+                <h2>Upcoming events</h2>
               </div>
               <button className="text-button" onClick={() => navigate('Events')}>
                 All events <ArrowRight size={14} />
@@ -569,8 +497,8 @@ function Overview({ version, navigate, open, write }) {
               </div>
             ) : (
               <section className="panel">
-                <Empty title="The next great night starts here" icon={CalendarDays}>
-                  Create your first event, then connect an audience.
+                <Empty title="No upcoming events" icon={CalendarDays}>
+                  Create an event to get started.
                 </Empty>
               </section>
             )}
@@ -578,8 +506,8 @@ function Overview({ version, navigate, open, write }) {
               <section className="panel">
                 <div className="panel-heading">
                   <div>
-                    <h2>The familiar faces</h2>
-                    <p>Your highest-value customer relationships</p>
+                    <h2>Top customers</h2>
+                    <p>Customers ranked by net ticket sales</p>
                   </div>
                   <button className="text-button" onClick={() => navigate('Audience')}>
                     View audience <ArrowRight size={14} />
@@ -588,24 +516,14 @@ function Overview({ version, navigate, open, write }) {
                 <PeopleTable people={d.topPeople} open={open} compact />
               </section>
               <section className="insight-panel">
-                <span className="insight-icon">
-                  <Sparkles size={20} />
-                </span>
-                <span className="eyebrow">THE COMPOUND EFFECT</span>
-                <h2>
-                  The best audience for your next night?
-                  <br />
-                  <em>It’s already in the room.</em>
-                </h2>
+                <h2>Repeat customers</h2>
                 <p>
-                  {d.repeat_buyers
-                    ? `${number(d.repeat_buyers)} people have bought more than one event. Build your next invitation around what brings them back.`
-                    : 'Every RSVP and purchase can become the beginning of a lasting relationship.'}
+                  {number(d.repeat_buyers)} customers have purchased tickets for more than one
+                  event.
                 </p>
                 <button className="text-button" onClick={() => navigate('Audience')}>
-                  Get to know your audience <ArrowUpRight size={15} />
+                  View audience <ArrowUpRight size={15} />
                 </button>
-                <div className="orbital" />
               </section>
             </div>
           </>
@@ -725,7 +643,7 @@ function EventArt({ event, index }) {
     <div className={`event-art art-${index % 3}`}>
       <div className="art-glow" />
       <div className="art-lines" />
-      <span className="art-tag">CROWD CONTROL PRESENTS</span>
+      <span className="art-tag">EVENT</span>
       <div className="art-title">
         {event.name.split(' ').map((s, i) => (
           <span key={i}>{s}</span>
@@ -840,7 +758,7 @@ function PeopleTable({ people, open, compact = false }) {
       </table>
     </div>
   ) : (
-    <Empty title="Your audience starts with one connection" icon={Users}>
+    <Empty title="No contacts yet" icon={Users}>
       Add a contact or import a reviewed event report.
     </Empty>
   );
@@ -854,9 +772,9 @@ function Audience({ version, search, setSearch, open, write }) {
   return (
     <>
       <PageTitle
-        eyebrow="THE PEOPLE BEHIND THE NIGHTS"
-        title="Your audience."
-        description="One profile. Every connection. A relationship that lasts."
+        eyebrow="CONTACTS"
+        title="Audience"
+        description="Customer profiles, purchase history, and contact permissions."
       >
         <Button icon={Upload} onClick={() => write('import')}>
           Import audience
@@ -914,9 +832,9 @@ function Events({ version, open, write }) {
   return (
     <>
       <PageTitle
-        eyebrow="CURATED NIGHTS. CONNECTED PEOPLE."
-        title="Make the next night count."
-        description="Every event is a new chapter in your audience’s story."
+        eyebrow="EVENTS"
+        title="Events"
+        description="Event details, registrations, and suggested audiences."
       >
         <Button className="primary" icon={Plus} onClick={() => write('event')}>
           Create event
@@ -948,7 +866,7 @@ function Events({ version, open, write }) {
         </div>
       ) : (
         <section className="panel">
-          <Empty title="A blank canvas for a great night" icon={CalendarDays}>
+          <Empty title="No events yet" icon={CalendarDays}>
             Create an event to start building its audience.
           </Empty>
         </section>
@@ -961,9 +879,9 @@ function Sources({ version, write, workspace }) {
   return (
     <>
       <PageTitle
-        eyebrow="THE FOUNDATION"
-        title="Bring it all together."
-        description="Connect the moments that make your audience yours."
+        eyebrow="IMPORTS AND SYNC"
+        title="Data sources"
+        description="Import history and source status."
       >
         <Button className="primary" icon={Upload} onClick={() => write('import')}>
           Import CSV
@@ -1031,16 +949,14 @@ function Sources({ version, write, workspace }) {
               </span>
               <span>
                 <ShieldCheck size={14} />{' '}
-                {workspace === 'demo'
-                  ? 'Isolated demonstration database'
-                  : 'Persistent workspace database'}
+                {workspace === 'demo' ? 'Isolated demonstration database' : 'Persistent database'}
               </span>
             </div>
             <section className="panel">
               <div className="panel-heading">
                 <div>
                   <h2>Import history</h2>
-                  <p>Review every file added to your workspace</p>
+                  <p>Imported files and their status</p>
                 </div>
                 <Database size={17} />
               </div>
@@ -1070,9 +986,8 @@ function Sources({ version, write, workspace }) {
                   </table>
                 </div>
               ) : (
-                <Empty title="A clean start" icon={Upload}>
-                  Your import history will appear here. Files are previewed before any audience data
-                  changes.
+                <Empty title="No imports yet" icon={Upload}>
+                  No imports yet. Files are previewed before any audience data changes.
                 </Empty>
               )}
             </section>
@@ -1105,90 +1020,12 @@ function Sources({ version, write, workspace }) {
     </>
   );
 }
-function Auth({ onClose, onSuccess }) {
-  const { data, loading, error } = useData('/auth/status');
-  const [err, setErr] = useState(''),
-    [busy, setBusy] = useState(false);
-  return (
-    <Modal
-      title={data?.setupRequired ? 'Your crowd starts here.' : 'Welcome back.'}
-      subtitle={
-        data?.setupRequired
-          ? 'Create the owner account for your private workspace.'
-          : 'Sign in to access your real audience data.'
-      }
-      onClose={onClose}
-    >
-      <ErrorBox message={error || err} />
-      {loading ? (
-        <Loading />
-      ) : (
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setBusy(true);
-            setErr('');
-            const form = new FormData(e.currentTarget);
-            try {
-              await api(`/auth/${data.setupRequired ? 'setup' : 'login'}`, {
-                method: 'POST',
-                body: JSON.stringify(Object.fromEntries(form)),
-              });
-              onSuccess();
-            } catch (e) {
-              setErr(e.message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <Field
-            label="Email address"
-            name="email"
-            type="email"
-            autoComplete="username"
-            required
-            autoFocus
-          />
-          <Field
-            label="Password"
-            name="password"
-            type="password"
-            minLength={12}
-            maxLength={128}
-            autoComplete={data?.setupRequired ? 'new-password' : 'current-password'}
-            required
-          />
-          <p className="form-note">
-            <LockKeyhole size={13} /> At least 12 characters. Your real workspace starts empty.
-          </p>
-          {data?.setupRequired && data?.setupTokenRequired && (
-            <Field
-              label="Workspace setup token"
-              name="setup_token"
-              type="password"
-              autoComplete="off"
-              required
-            />
-          )}
-          <Button className="primary full" disabled={busy}>
-            {busy ? 'Please wait…' : data?.setupRequired ? 'Create workspace' : 'Sign in'}
-            <ArrowRight size={15} />
-          </Button>
-        </form>
-      )}
-    </Modal>
-  );
-}
+
 function EventForm({ onClose, onSuccess }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   return (
-    <Modal
-      title="Set the scene."
-      subtitle="Create the event. Find the people who belong there."
-      onClose={onClose}
-    >
+    <Modal title="Create event" subtitle="Event details and ticket pricing." onClose={onClose}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -1259,11 +1096,7 @@ function ContactForm({ onClose, onSuccess }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   return (
-    <Modal
-      title="A new connection."
-      subtitle="Start a profile. Let the relationship grow."
-      onClose={onClose}
-    >
+    <Modal title="Add contact" subtitle="Contact details." onClose={onClose}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -1484,7 +1317,7 @@ function Recommendation({ id, onClose }) {
             <div className="recommend-note">
               <Sparkles size={18} />
               <div>
-                <strong>The right people for this night.</strong>
+                <strong>Suggested audience</strong>
                 <p>
                   Ranked by city, concept and purchase history. {d.suppressed} existing buyers
                   excluded.
@@ -1509,6 +1342,12 @@ function Recommendation({ id, onClose }) {
                       <div>
                         <strong>{p.name}</strong>
                         <small>{p.reasons.join(' · ') || 'No matching signals yet'}</small>
+                        <small>
+                          {p.confidence} confidence · {p.evidence_events} past paid events
+                          {p.typical_lead_days !== null
+                            ? ` · Usually buys ${p.typical_lead_days} days before`
+                            : ''}
+                        </small>
                       </div>
                       <span className="score">
                         {p.score}
@@ -1551,8 +1390,8 @@ function Import({ onClose, onSuccess }) {
   };
   return (
     <Modal
-      title={preview ? 'Review your import.' : 'Bring your audience home.'}
-      subtitle="Preview first. Keep your customer history accurate."
+      title={preview ? 'Review import' : 'Import audience'}
+      subtitle="Upload a CSV, review the records, and import."
       onClose={onClose}
       wide
     >

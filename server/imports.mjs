@@ -201,6 +201,14 @@ export function commitImport(db, batchId, { inTransaction = false } = {}) {
           "SELECT id,person_id FROM orders WHERE source='posh_csv' AND external_id=? AND event_id=?",
         )
         .get(r.external_id, batch.event_id);
+      if (
+        old &&
+        db.prepare("SELECT 1 FROM source_records WHERE kind='order' AND local_id=?").get(old.id)
+      )
+        fail(
+          409,
+          'This order is managed by the collector. Run a fresh collection instead of overwriting it with CSV.',
+        );
       if (old && old.person_id !== p.id)
         fail(
           409,

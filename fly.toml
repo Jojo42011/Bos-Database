@@ -1,4 +1,4 @@
-# Set the app name with `fly launch --no-deploy` before your first deployment.
+app = "crowd-control-bos"
 primary_region = "dfw"
 kill_signal = "SIGTERM"
 kill_timeout = "30s"
@@ -11,7 +11,7 @@ kill_timeout = "30s"
   HOST = "0.0.0.0"
   PORT = "3000"
   DATA_DIR = "/data"
-  COOKIE_SECURE = "true"
+  PUBLIC_ORIGIN = "https://crowd-control-bos.fly.dev"
   BROWSER_ALLOWED_HOSTS = "posh.vip"
 
 [http_service]
