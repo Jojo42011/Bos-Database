@@ -2,7 +2,9 @@
 
 The included Dockerfile packages the web app, API, database adapter, and open-source Chromium worker together. `fly.toml` mounts a persistent volume at `/data` and disables automatic stopping. The scheduler runs on the server, independent of the owner's computer.
 
-This configuration has not been deployed or container-tested from this Windows environment. Verify the image and a real export on Fly before enabling scheduled imports. Chromium runs as the non-root `node` user with its sandbox enabled; check browser startup on the target host rather than disabling the sandbox to hide launch failures.
+Deployed on 2026-10-14 at https://crowd-control-bos.fly.dev in the `jahan-patel` organization, `dfw` region. One 2 GB shared-CPU machine uses a 3 GB encrypted volume with scheduled snapshots. HTTPS, the health check, application API/UI, and sandboxed Chromium navigation to POSH were verified. The database and browser profile reside under `/data`. A real signed-in POSH collection still needs validation. The app intentionally has no login gate.
+
+The vault encryption key is stored as a Fly secret. The deployment token was supplied only through a temporary process environment, never added to this repository or container. The Docker runtime invokes the Playwright CLI by its package path so production-only installs do not depend on the development test package’s executable link.
 
 ## First deployment
 
