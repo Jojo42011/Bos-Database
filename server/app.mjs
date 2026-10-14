@@ -65,6 +65,7 @@ export function createApp({
   browserWorker = null,
   collector = null,
   setupToken = '',
+  requireAuth = false,
 }) {
   const app = express();
   app.disable('x-powered-by');
@@ -103,7 +104,12 @@ export function createApp({
     legacyHeaders: false,
     message: { error: 'Too many sign-in attempts. Try again later.' },
   });
-  app.use('/api/auth', loginLimit);
+  app.use(
+    '/api/auth',
+    (req, res, next) =>
+      requireAuth ? next() : res.status(404).json({ error: 'App login is disabled.' }),
+    loginLimit,
+  );
   const sessionUser = (req) => {
     const token = req.headers.cookie
       ?.split(';')
@@ -201,12 +207,12 @@ export function createApp({
     res.status(202).json({ accepted: true, status: 'awaiting_mapping' });
   });
   app.use('/api', (req, res, next) => {
-    const isDemo = req.get('x-workspace') === 'demo';
+    const isDemo = requireAuth && req.get('x-workspace') === 'demo';
     if (isDemo && !['GET', 'HEAD'].includes(req.method))
       return res
         .status(403)
         .json({ error: 'Demo is read-only. Switch to your workspace to make changes.' });
-    if (!isDemo && !sessionUser(req))
+    if (requireAuth && !isDemo && !sessionUser(req))
       return res.status(401).json({ error: 'Please sign in to your workspace.' });
     req.db = isDemo ? demo : live;
     req.isDemo = isDemo;

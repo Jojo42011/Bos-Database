@@ -3,25 +3,13 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.mjs';
-import { openDb, seedDemo } from './db.mjs';
+import { openDb } from './db.mjs';
 import { Collector } from './collector/service.mjs';
 import { BrowserWorker } from './browser/worker.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.resolve(process.env.DATA_DIR || path.join(root, 'data'));
 const live = openDb(path.join(dir, 'crowd-control.sqlite')),
   demo = openDb(':memory:');
-seedDemo(demo);
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.PUBLIC_ORIGIN?.startsWith('https://') || process.env.COOKIE_SECURE !== 'true')
-    throw new Error('Production requires an HTTPS PUBLIC_ORIGIN and COOKIE_SECURE=true.');
-  if (
-    !live.prepare('SELECT id FROM users LIMIT 1').get() &&
-    (process.env.SETUP_TOKEN || '').length < 32
-  )
-    throw new Error(
-      'Set a random SETUP_TOKEN of at least 32 characters before creating the production owner.',
-    );
-}
 const worker = new BrowserWorker({
   db: live,
   dir,
@@ -38,9 +26,7 @@ const app = createApp({
   demo,
   webhookToken: process.env.POSH_WEBHOOK_TOKEN,
   publicOrigin: process.env.PUBLIC_ORIGIN,
-  secureCookie: process.env.COOKIE_SECURE === 'true',
   browserWorker: worker,
-  setupToken: process.env.SETUP_TOKEN,
 });
 if (process.argv.includes('--production')) {
   app.use(express.static(path.join(root, 'dist')));

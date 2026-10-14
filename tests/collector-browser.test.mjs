@@ -93,7 +93,9 @@ test('Chromium collects paginated event history and orders, reuses login, stages
     fields: fields('external_id name starts_at capacity price_cents status'),
   };
   try {
-    const agent = request.agent(createApp({ live: db, demo, browserWorker: worker, collector: c }));
+    const agent = request.agent(
+      createApp({ requireAuth: true, live: db, demo, browserWorker: worker, collector: c }),
+    );
     await agent.get('/api/collector').expect(401);
     await agent.get('/api/collector').set('X-Workspace', 'demo').expect(403);
     await agent

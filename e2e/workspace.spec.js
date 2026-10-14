@@ -1,49 +1,23 @@
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
-test('desktop, mobile and a real authenticated import workflow', async ({ page }) => {
+test('open access, mobile navigation and persistent import workflow', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your crowd, understood.' })).toBeVisible();
-  await expect(page.getByText('186', { exact: true })).toBeVisible();
-  await page.screenshot({
-    path: process.env.CC_SCREENSHOTS
-      ? path.join(process.env.CC_SCREENSHOTS, 'crowd-control-desktop.png')
-      : 'test-results/desktop.png',
-    fullPage: true,
-    animations: 'disabled',
-  });
-  await page.getByRole('button', { name: 'Audience', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Search audience' }).fill('guest10@');
-  await expect(page.getByText('guest10@example.com', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Jasmine/ }).click();
-  await expect(page.getByRole('heading', { name: 'Purchase history' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close dialog' }).click();
-  await page.getByRole('button', { name: 'Events', exact: true }).click();
-  await page.getByRole('button', { name: /After Hours/ }).click();
-  await expect(page.getByText('The right people for this night.')).toBeVisible();
-  await page.getByRole('button', { name: 'Close dialog' }).click();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await expect(page.locator('.workspace-switch')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: /Sign in|Sign out|Set up your workspace/ }),
+  ).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Open navigation' }).click();
-  await page.getByRole('button', { name: 'Overview', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your crowd, understood.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Audience', exact: true }).click();
+  await expect(page.getByText('No contacts yet')).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
-  await expect(page.locator('.sidebar')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -238, 0)');
-  await page.screenshot({
-    path: process.env.CC_SCREENSHOTS
-      ? path.join(process.env.CC_SCREENSHOTS, 'crowd-control-mobile.png')
-      : 'test-results/mobile.png',
-    fullPage: true,
-    animations: 'disabled',
-  });
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await page.getByRole('button', { name: 'Set up your workspace' }).click();
-  await page.getByLabel('Email address').fill('qa@example.com');
-  await page.getByLabel('Password', { exact: true }).fill('test-owner-password-123');
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
-  await expect(page.getByText('Live workspace', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByRole('button', { name: 'Create event', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Event name').fill('E2E Velvet Night');
@@ -66,9 +40,9 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
     ),
   });
   await page.getByRole('button', { name: 'Preview import' }).click();
-  await expect(page.getByRole('heading', { name: 'Review your import.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Review import' })).toBeVisible();
   await page.getByRole('button', { name: 'Import 1 orders' }).click();
-  await expect(page.getByText('Import complete. Your audience has been updated.')).toBeVisible();
+  await expect(page.getByText('Import complete.')).toBeVisible();
   await page.getByRole('button', { name: 'Audience', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search audience' }).fill('test@example.com');
   await page.getByRole('button', { name: /Test Guest/ }).click();
@@ -82,12 +56,10 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
   await expect(page.getByText('Email · opted in')).toBeVisible();
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.reload();
-  await page.getByRole('button', { name: /Crowd Control Demo workspace/ }).click();
-  await expect(page.getByText('Live workspace', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Audience', exact: true }).click();
   await expect(page.getByText('test@example.com', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Browser worker', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Let the night flow.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser worker' })).toBeVisible();
   await page.getByRole('button', { name: 'Add event sync' }).first().click();
   await page.getByLabel('Crowd Control event').selectOption({ label: 'E2E Velvet Night · Austin' });
   await page.getByLabel('POSH organizer report page URL').fill('https://example.com/report');
@@ -128,6 +100,10 @@ test('desktop, mobile and a real authenticated import workflow', async ({ page }
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
   await expect(page.locator('.sidebar')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -238, 0)');
-  await page.screenshot({ path: 'test-results/campaign-mobile.png', fullPage: true, animations: 'disabled' });
+  await page.screenshot({
+    path: 'test-results/campaign-mobile.png',
+    fullPage: true,
+    animations: 'disabled',
+  });
   expect(errors).toEqual([]);
 });

@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Start in the read-only demo, then choose **Set up your workspace** to create the owner account. The live workspace starts empty. Default binding is loopback only. Create the owner locally before exposing any server: initial setup is first-come, first-served.
+Open http://localhost:3000. The app opens directly into the persistent database. There is no app login, owner setup, workspace switch, or synthetic demo in the UI. POSH itself still requires its own login through Browser worker. The server binds to loopback by default; anyone with access to the server can read and modify the database.
 
 ```sh
 npm test
@@ -29,8 +29,8 @@ Copy `.env.example` to `.env` for configuration. Never commit `.env`, database f
 - Event creation and explainable audience ranking (affinity-v2), with recency, distinct-event confidence, purchase timing, and suppression of paid/RSVP/pending registrations.
 - CSV preview and transactional import, stable order IDs, refund updates, identity-conflict rejection, and replay-safe commit.
 - POSH webhook inbox with shared-secret authentication and duplicate-payload protection. Deliveries remain `awaiting_mapping`; no unverified payload creates orders.
-- Owner login with scrypt password hashes, hashed server sessions, HttpOnly/SameSite cookies, origin validation, login rate limiting, and audit entries.
-- Read-only synthetic demo in a separate in-memory database. Real imports never enter the demo.
+- Open application access with origin validation, request verification headers, and audit entries.
+- The application always uses the persistent database. Legacy authenticated/demo mode is retained only as an explicit server factory option for compatibility.
 
 ## Daily collector and outreach drafts
 
@@ -77,7 +77,7 @@ This is a single-owner, single-server foundation. SQLite persists in `DATA_DIR` 
 
 Before hosting with real PII:
 
-- Use HTTPS and set `PUBLIC_ORIGIN` to the exact public origin and `COOKIE_SECURE=true`. In production, initial owner creation requires a random `SETUP_TOKEN` of at least 32 characters, entered in the setup form.
+- Use HTTPS and set `PUBLIC_ORIGIN` to the exact public origin. The application has no login gate; use the intended network access boundary when hosting.
 - Keep reverse-proxy and host configuration controlled. `HOST` defaults to `127.0.0.1`; use `0.0.0.0` only behind the intended access boundary. Do not enable broad proxy trust.
 - Encrypt the server disk and backups, restrict filesystem access, and test restoration. Use SQLite's online backup API or stop the service for a consistent backup; copying just the main file while WAL is active is insufficient.
 - Define source-payload retention, deletion/export workflows, backup expiry and consent evidence review. Those operational workflows are not automated here.
