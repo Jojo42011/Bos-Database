@@ -15,6 +15,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Permit user namespaces only for the pinned Playwright headless executable.
+      # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
+      - name: Allow Chromium sandbox on the Ubuntu runner
+        run: |
+          sudo tee /etc/apparmor.d/crowd-control-playwright > /dev/null <<'PROFILE'
+          abi <abi/4.0>,
+          include <tunables/global>
+          profile crowd-control-playwright /home/runner/.cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell flags=(unconfined) {
+            userns,
+          }
+          PROFILE
+          sudo apparmor_parser -r /etc/apparmor.d/crowd-control-playwright
       - run: npm test
       - run: npm run build
       - run: npx playwright test
